@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "script/build",
     "test": "script/test"
   },
   "author": "",
   "license": "Apache-2.0",
   "engines": {
-    "shadow-node": "0.11.5"
+    "shadow-node": "0.11.6"
   },
   "dependencies": {
     "node-addon-api": "^1.6.3"

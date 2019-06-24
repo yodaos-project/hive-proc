@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -ex
+
+cmake `pwd` -B`pwd`/build \
+  -DCMAKE_INSTALL_PREFIX=/ \
+  $@
+
+cd build
+  make
+  make DESTDIR=`pwd`/../out install
+cd -

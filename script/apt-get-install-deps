@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -ex
+
+sudo apt-get update -q
+sudo apt-get install -q -y --allow-unauthenticated \
+    cmake \
+    build-essential \
+    jq
