@@ -6,11 +6,12 @@ node_js:
 - '10'
 
 install:
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then script/apt-get-install-deps; fi
-- script/install-shadow-node
+- script/ci-deps
+- script/install-shadow-node --global
 - yarn
 
 script:
+- script/install
 - yarn build
 
 jobs:
