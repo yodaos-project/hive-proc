@@ -2,33 +2,37 @@ cmake_minimum_required(VERSION 3.0)
 project(yoda-hive-proc CXX)
 set(CMAKE_CXX_STANDARD 11)
 
-include(ExternalProject)
-find_package(Git REQUIRED)
-string(REPLACE ";" "|" CMAKE_PREFIX_PATH_ALT_SEP "${CMAKE_PREFIX_PATH}")
-string(REPLACE ";" "|" CMAKE_INCLUDE_PATH_ALT_SEP "${CMAKE_INCLUDE_PATH}")
-string(REPLACE ";" "|" CMAKE_LIBRARY_PATH_ALT_SEP "${CMAKE_LIBRARY_PATH}")
-ExternalProject_Add(hive
-  PREFIX ${CMAKE_BINARY_DIR}/hive
-  GIT_REPOSITORY https://github.com/yodaos-project/hive.git
-  GIT_TAG master
-  TIMEOUT 10
-  LIST_SEPARATOR | # Use the alternate list separator
-  CMAKE_ARGS
-    -DNODEJS_VARIANT=${NODEJS_VARIANT}
-    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_ALT_SEP}
-    -DCMAKE_INCLUDE_PATH=${CMAKE_INCLUDE_PATH_ALT_SEP}
-    -DCMAKE_LIBRARY_PATH=${CMAKE_LIBRARY_PATH_ALT_SEP}
-    -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/hive-install/hive
-    # cross-compiling
-    -DCMAKE_SYSROOT=${CMAKE_SYSROOT}
-    -DCMAKE_SYSTEM_PERFIX_PATH=${CMAKE_SYSTEM_PERFIX_PATH}
-    -DCMAKE_STAGING_PERFIX=${CMAKE_STAGING_PERFIX}
-    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-    -DCMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}
-)
 set(HIVEPROC_INSTALL_DIR "/usr/lib/hive-proc/" CACHE PATH "hiveproc install directory")
+set(NODEJS_VARIANT "shadow-node" CACHE STRING "Node.js variant to be used")
+
+find_path(NODE_API_INCLUDE_DIRS
+  NAMES node_api.h
+  PATH_SUFFIXES ${NODEJS_VARIANT}
+)
+find_path(CAPS_INCLUDE_DIRS
+  NAMES caps.h
+  PATH_SUFFIXES caps
+)
+find_library(CAPS_LIBRARY
+  NAMES libcaps.a)
+
+file(GLOB HIVEPROC_SOURCE src/addon.cc src/hiveproc.cc)
+
+add_library(hiveproc ${HIVEPROC_SOURCE})
+set_target_properties(hiveproc PROPERTIES PREFIX "" SUFFIX ".node")
+if(APPLE)
+  set_target_properties(hiveproc PROPERTIES
+                        LINK_FLAGS "-rdynamic -undefined dynamic_lookup")
+else()
+  set_target_properties(hiveproc PROPERTIES
+                        LINK_FLAGS "-rdynamic -Wl,--unresolved-symbols=ignore-all")
+endif()
+target_include_directories(hiveproc PUBLIC src PRIVATE vendor/node-addon-api ${NODE_API_INCLUDE_DIRS} ${CAPS_INCLUDE_DIRS})
+target_link_libraries(hiveproc ${CAPS_LIBRARY})
+
+add_executable(echo-server test/echo-server.cc src/hiveproc.cc)
+target_include_directories(echo-server PUBLIC src PRIVATE vendor/node-addon-api ${NODE_API_INCLUDE_DIRS} ${CAPS_INCLUDE_DIRS})
+target_link_libraries(echo-server ${CAPS_LIBRARY})
 
 install(DIRECTORY etc DESTINATION /)
 install(DIRECTORY lib DESTINATION ${HIVEPROC_INSTALL_DIR})

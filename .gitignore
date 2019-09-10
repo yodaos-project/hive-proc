@@ -2,3 +2,5 @@
 /out
 /deps
 node_modules
+*.node
+*.sock

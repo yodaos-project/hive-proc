@@ -7,7 +7,7 @@ PROG=/usr/bin/iotjs
 
 start_service() {
     procd_open_instance
-    procd_set_param command $PROG /data/hive/lib/flora-server.js
+    procd_set_param command $PROG /usr/lib/hive-proc/lib/hiveproc.js preset/yodaos.js
     procd_set_param env NODE_PRIORITIZED_PATH=/usr/lib/node_modules PULSEAUDIO_HOME=/var/run/pulse
     procd_set_param respawn 3600 2 -1
     procd_set_param stdout 1
