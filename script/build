@@ -1,12 +1,52 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 set -ex
 
-cmake `pwd` -B`pwd`/build \
-  -DCMAKE_INSTALL_PREFIX=/ \
-  $@
+project_dir=$(pwd)
 
-cd build
-  make
-  make DESTDIR=`pwd`/../out install
-cd -
+prefix="$project_dir/out/usr"
+test_build=false
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --prefix)
+      prefix=$2
+      shift
+      ;;
+    --test)
+      test_build=true
+      ;;
+    -h|--help)
+      printf "$help"
+      exit
+      ;;
+    --*)
+      echo "Illegal option $1"
+      ;;
+  esac
+  shift $(( $# > 0 ? 1 : 0 ))
+done
+
+mkdir -p $project_dir/out/usr
+cp -r $project_dir/deps/shadow-node/* $project_dir/out/usr
+
+cd ${project_dir}/deps/mutils
+build_dir="$project_dir/out/build/mutils"
+./config \
+  --build-dir="$build_dir" \
+  --build-library-type="STATIC" \
+  --cmake-modules="$project_dir/deps/cmake-modules" \
+  --prefix="$prefix"
+cd $build_dir
+make
+make install
+
+cd $project_dir
+build_dir="$project_dir/out/build/hiveproc"
+mkdir -p $build_dir
+cd $build_dir
+cmake $project_dir \
+  -DCMAKE_FIND_ROOT_PATH="$project_dir/out" \
+  -DCMAKE_LIBRARY_PATH="$prefix/lib"
+make
+cp $build_dir/hiveproc.node $project_dir
+
+cd $project_dir

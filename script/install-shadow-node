@@ -1,16 +1,37 @@
 #!/bin/bash
 set -ex
 
+project_dir=$(pwd)
+
+global='NO'
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --global)
+      global='YES'
+      ;;
+    --*)
+      echo "Illegal option $1"
+      ;;
+  esac
+  shift $(( $# > 0 ? 1 : 0 ))
+done
+
 shadow_node_version=`cat package.json | jq -r '.engines."shadow-node"'`
 url="https://github.com/yodaos-project/ShadowNode/releases/download/v$shadow_node_version/shadow-node-v$shadow_node_version-$(uname)-$(uname -m).tar.gz"
 file_name="shadow-node-v$shadow_node_version-$(uname)-$(uname -m).tar.gz"
 
 cd /tmp
-  wget $url
+  arvhice_path="/tmp/${file_name}"
+  curl -sLo "$arvhice_path" "$url"
   tar -xzf $file_name
 
-  sudo=`command -v sudo || true`
-  command $sudo cp -r ./usr/* /usr
+  if [ "$global" = 'YES' ]; then
+    sudo=`command -v sudo || true`
+    command $sudo cp -r ./usr/* /usr
+  fi
+
+  mkdir -p $project_dir/deps/shadow-node
+  command cp -r ./usr/* $project_dir/deps/shadow-node
 cd -
 
 type iotjs

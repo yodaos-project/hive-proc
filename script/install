@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -ex
+
+mkdir -p deps
+
+script/install-shadow-node
+script/pull-deps --repo Rokid/aife-mutils --dest deps/mutils --ref release/1.0.x
+script/pull-deps --repo Rokid/aife-cmake-modules --dest deps/cmake-modules --ref master

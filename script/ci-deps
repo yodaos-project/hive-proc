@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [ "$(uname)" = "Darwin" ]; then
+  brew install jq
+else
+  sudo=`command -v sudo || true`
+  command $sudo apt-get update
+  command $sudo apt-get install -y jq
+fi
