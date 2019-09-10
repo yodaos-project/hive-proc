@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-expressions */
+/* eslint-disable no-unused-expressions,import/no-absolute-path */
 require('/usr/yoda/client/ext-helper.js')
 require('@yodaos/application').Application
 require('@yodaos/application').AudioFocus

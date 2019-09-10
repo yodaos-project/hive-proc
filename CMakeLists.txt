@@ -28,9 +28,9 @@ ExternalProject_Add(hive
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}
 )
+set(HIVEPROC_INSTALL_DIR "/usr/lib/hive-proc/" CACHE PATH "hiveproc install directory")
 
 install(DIRECTORY etc DESTINATION /)
-install(DIRECTORY lib DESTINATION /usr/lib/hive-proc/)
-install(FILES package.json DESTINATION /usr/lib/hive-proc/)
-install(DIRECTORY ${CMAKE_BINARY_DIR}/hive-install/hive
-  DESTINATION /usr/lib/hive-proc/node_modules/)
+install(DIRECTORY lib DESTINATION ${HIVEPROC_INSTALL_DIR})
+install(DIRECTORY preset DESTINATION ${HIVEPROC_INSTALL_DIR})
+install(FILES package.json DESTINATION ${HIVEPROC_INSTALL_DIR})
