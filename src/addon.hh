@@ -14,5 +14,5 @@
 namespace hiveproc
 {
 Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info);
-Napi::Value SpecializeProcess(Napi::Object process, std::shared_ptr<Caps>& argv);
+void SpecializeProcess(Napi::Object process, std::shared_ptr<Caps>& argv);
 }

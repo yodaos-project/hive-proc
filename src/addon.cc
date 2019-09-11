@@ -39,11 +39,17 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info)
       SpecializeProcess(process, argv);
       return Napi::Number::New(env, 0);
     }
-    // TODO: write back pid
+    std::shared_ptr<Caps> ret = Caps::new_instance();
+    assert(ret->write(pid) == CAPS_SUCCESS);
+    size_t buf_size = ret->binary_size();
+    uint8_t buf[buf_size];
+    assert(ret->serialize(buf, buf_size) == CAPS_SUCCESS);
+    writex(data_socket, buf, buf_size);
+    close(data_socket);
   }
 }
 
-Napi::Value SpecializeProcess(Napi::Object process, std::shared_ptr<Caps> &argv)
+void SpecializeProcess(Napi::Object process, std::shared_ptr<Caps> &argv)
 {
   Napi::Env env = process.Env();
   auto pidDescriptor =
@@ -77,8 +83,6 @@ Napi::Value SpecializeProcess(Napi::Object process, std::shared_ptr<Caps> &argv)
     }
   }
   process["argv"] = child_argv;
-
-  return process;
 }
 } // namespace hiveproc
 
