@@ -4,6 +4,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(HIVEPROC_INSTALL_DIR "/usr/lib/hive-proc/" CACHE PATH "hiveproc install directory")
 set(NODEJS_VARIANT "shadow-node" CACHE STRING "Node.js variant to be used")
+set(HIVEPROC_SOCKET "/var/run/hive.sock" CACHE STRING "hiveproc ")
 
 find_path(NODE_API_INCLUDE_DIRS
   NAMES node_api.h
@@ -18,7 +19,7 @@ find_library(CAPS_LIBRARY
 
 file(GLOB HIVEPROC_SOURCE src/addon.cc src/hiveproc.cc)
 
-add_library(hiveproc ${HIVEPROC_SOURCE})
+add_library(hiveproc SHARED ${HIVEPROC_SOURCE})
 set_target_properties(hiveproc PROPERTIES PREFIX "" SUFFIX ".node")
 if(APPLE)
   set_target_properties(hiveproc PROPERTIES
@@ -27,6 +28,9 @@ else()
   set_target_properties(hiveproc PROPERTIES
                         LINK_FLAGS "-rdynamic -Wl,--unresolved-symbols=ignore-all")
 endif()
+target_compile_definitions(hiveproc PRIVATE
+  HIVE_SOCKET="${HIVEPROC_SOCKET}"
+  NODE_ADDON_API_DISABLE_DEPRECATED)
 target_include_directories(hiveproc PUBLIC src PRIVATE vendor/node-addon-api ${NODE_API_INCLUDE_DIRS} ${CAPS_INCLUDE_DIRS})
 target_link_libraries(hiveproc ${CAPS_LIBRARY})
 

@@ -1,13 +1,11 @@
 #pragma once
 
 #ifndef HIVE_SOCKET
-#define HIVE_SOCKET "/var/run/socket"
+#define HIVE_SOCKET "/var/run/hive.sock"
 #endif
 
 #include "hiveproc.hh"
-#define NODE_ADDON_API_DISABLE_DEPRECATED
-#define NAPI_EXPERIMENTAL
-#define NAPI_VERSION 4
+#define NAPI_VERSION 3
 #include "napi.h"
 #include "uv.h"
 

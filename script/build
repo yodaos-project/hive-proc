@@ -5,8 +5,18 @@ project_dir=$(pwd)
 
 prefix="$project_dir/out/usr"
 test_build=false
+buildtype='Debug'
+hiveproc_socket="$project_dir/hive.sock"
 while [ $# -gt 0 ]; do
   case "$1" in
+    --buildtype)
+      buildtype=$2
+      shift
+      ;;
+    --hiveproc-socket)
+      hiveproc_socket=$2
+      shift
+      ;;
     --prefix)
       prefix=$2
       shift
@@ -44,7 +54,8 @@ build_dir="$project_dir/out/build/hiveproc"
 mkdir -p $build_dir
 cd $build_dir
 cmake $project_dir \
-  -DCMAKE_FIND_ROOT_PATH="$project_dir/out" \
+  -DHIVEPROC_SOCKET="$hiveproc_socket" \
+  -DCMAKE_BUILD_TYPE="$buildtype" \
   -DCMAKE_LIBRARY_PATH="$prefix/lib"
 make
 cp $build_dir/hiveproc.node $project_dir

@@ -34,7 +34,7 @@ int initUnixSocket(char *pathname)
   unlink(pathname);
   if (::bind(fd, (sockaddr *)&addr, sizeof(addr)) < 0)
   {
-    YDLogw("bind failed: %d(%s)", errno, strerror(errno));
+    YDLogw("bind to %s failed: %d(%s)", pathname, errno, strerror(errno));
     ::close(fd);
     return -2;
   }
