@@ -9,8 +9,13 @@
 #include "napi.h"
 #include "uv.h"
 
-namespace hiveproc
-{
+namespace hiveproc {
+enum CommandType { Init = 0, Fork };
+enum ResponseStatus {
+  Success = 0,
+};
+
 Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info);
-void SpecializeProcess(Napi::Object process, std::shared_ptr<Caps>& argv);
-}
+void SpecializeProcess(Napi::Object process, std::string &cwd,
+                       std::shared_ptr<Caps> &argv);
+} // namespace hiveproc

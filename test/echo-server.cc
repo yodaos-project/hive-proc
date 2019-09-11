@@ -24,8 +24,9 @@ int main(int argc, char **argv)
 
   for (;;)
   {
+    pid_t pid;
     std::shared_ptr<Caps> caps;
-    int data_socket = poll(conn_socket, caps);
+    int data_socket = poll(conn_socket, caps, pid);
     assert(data_socket >= 0);
 
     std::string target;

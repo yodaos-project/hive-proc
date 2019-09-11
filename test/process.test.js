@@ -3,12 +3,6 @@ var http = require('http')
 var assert = require('assert')
 var hive = require('../lib/hive-cli')
 
-var forkPid
-var reqPid
-process.on('exit', () => {
-  assert.strictEqual(forkPid, reqPid)
-})
-
 hive.initHiveProc()
   .then(run)
 
@@ -16,7 +10,6 @@ function run () {
   return new Promise(resolve => {
     var server = http.createServer((req, res) => {
       console.log('incoming req', req.headers)
-      reqPid = Number(req.headers.pid)
       var bufs = []
       req.on('data', data => {
         bufs.push(data)
@@ -24,6 +17,12 @@ function run () {
       req.on('end', () => {
         res.statusCode = 200
         res.end()
+
+        var buf = Buffer.concat(bufs).toString()
+        var data
+        try { data = JSON.parse(buf) } catch (err) { assert.fail('unable parse data') }
+        assert.strictEqual(data.argv[1], path.join(__dirname, 'children', 'http-cli.js'))
+
         server.close()
         resolve()
       })
@@ -32,7 +31,6 @@ function run () {
       var port = server.address().port
       hive.requestFork(process.cwd(), [path.join(__dirname, 'children', 'http-cli.js'), String(port)])
         .then(pid => {
-          forkPid = pid
           console.log('forked child', pid)
         })
     })
