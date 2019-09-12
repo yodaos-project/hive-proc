@@ -97,20 +97,4 @@ int poll(int conn_socket, std::shared_ptr<Caps> &caps, pid_t &pid) {
   return data_socket;
 }
 
-ssize_t readx(int fildes, uint8_t *buf, size_t nbyte) {
-  ssize_t r = 0;
-  while (r < nbyte) {
-    r += read(fildes, buf + r, nbyte - r);
-  }
-  return r;
-}
-
-ssize_t writex(int fildes, uint8_t *buf, size_t nbyte) {
-  ssize_t r = 0;
-  while (r < nbyte) {
-    r += write(fildes, buf + r, nbyte - r);
-  }
-  return r;
-}
-
 } // namespace hiveproc
