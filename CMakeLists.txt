@@ -34,6 +34,20 @@ target_compile_definitions(hiveproc PRIVATE
 target_include_directories(hiveproc PUBLIC src PRIVATE vendor/node-addon-api ${NODE_API_INCLUDE_DIRS} ${CAPS_INCLUDE_DIRS})
 target_link_libraries(hiveproc ${CAPS_LIBRARY})
 
+add_library(hivecli SHARED src/hivecli.cc)
+set_target_properties(hivecli PROPERTIES PREFIX "" SUFFIX ".node")
+if(APPLE)
+  set_target_properties(hivecli PROPERTIES
+                        LINK_FLAGS "-rdynamic -undefined dynamic_lookup")
+else()
+  set_target_properties(hivecli PROPERTIES
+                        LINK_FLAGS "-rdynamic -Wl,--unresolved-symbols=ignore-all")
+endif()
+target_compile_definitions(hivecli PRIVATE
+  NODE_ADDON_API_DISABLE_DEPRECATED)
+target_include_directories(hivecli PUBLIC src PRIVATE vendor/node-addon-api ${NODE_API_INCLUDE_DIRS} ${CAPS_INCLUDE_DIRS})
+target_link_libraries(hivecli ${CAPS_LIBRARY})
+
 add_executable(echo-server test/echo-server.cc src/hiveproc.cc)
 target_include_directories(echo-server PUBLIC src PRIVATE vendor/node-addon-api ${NODE_API_INCLUDE_DIRS} ${CAPS_INCLUDE_DIRS})
 target_link_libraries(echo-server ${CAPS_LIBRARY})

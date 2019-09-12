@@ -13,7 +13,7 @@
     "shadow-node": "0.11.7"
   },
   "dependencies": {
-    "@yoda/caps": "yodaos-project/node-caps#master"
+    "@yoda/caps": "yodaos-project/node-caps#78a39ccfd330829ce9a6870ec30c3c49c97563f1"
   },
   "devDependencies": {
     "lodash": "^4.17.11",
