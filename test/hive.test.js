@@ -11,6 +11,7 @@ process.on('exit', () => {
 
 hive.initHiveProc()
   .then(run)
+  .then(hive.closeHiveProc)
 
 function run () {
   return new Promise(resolve => {

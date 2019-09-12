@@ -44,7 +44,7 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
     uint8_t buf[buf_size];
     assert(ret->serialize(buf, buf_size) == buf_size);
     writex(comm_socket, buf, buf_size);
-    close(comm_socket);
+    comm_fd = comm_socket;
     break;
 #undef CONTINUE
   }
@@ -94,6 +94,7 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
     assert(pid >= 0);
 
     if (pid == 0) {
+      assert(close(comm_fd) == 0);
       assert(close(data_socket) == 0);
       assert(close(conn_socket) == 0);
       uv_loop_fork(loop);
@@ -186,8 +187,9 @@ void hive__checkchld() {
            exit_status, term_signal);
   }
 
-  if (pending_chld && comm_pid > 0) {
-    kill(comm_pid, SIGCHLD);
+  if (pending_chld && comm_fd > 0) {
+    uint8_t data = 0;
+    write(comm_fd, &data, 1);
   }
 }
 } // namespace hiveproc

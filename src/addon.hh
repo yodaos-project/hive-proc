@@ -16,6 +16,7 @@ enum ResponseStatus {
 };
 
 pid_t comm_pid = 0;
+int comm_fd = -1;
 bool pending_chld_entry = false;
 
 void hive__sigchld(int sig);
