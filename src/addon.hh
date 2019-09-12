@@ -15,6 +15,12 @@ enum ResponseStatus {
   Success = 0,
 };
 
+pid_t comm_pid = 0;
+bool pending_chld_entry = false;
+
+void hive__sigchld(int sig);
+void hive__sigchld_start();
+void hive__checkchld();
 Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info);
 void SpecializeProcess(Napi::Object process, std::string &cwd,
                        std::shared_ptr<Caps> &argv);

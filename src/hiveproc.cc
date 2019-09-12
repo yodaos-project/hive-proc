@@ -62,7 +62,9 @@ int poll(int conn_socket, std::shared_ptr<Caps> &caps, pid_t &pid) {
   }
 
   int data_socket = accept(conn_socket, NULL, NULL);
-  assert(data_socket >= 0);
+  if (data_socket < 0) {
+    return data_socket;
+  }
 #ifdef __APPLE__
   socklen_t len = sizeof(pid_t);
   SOCKET_CHECKEQ(

@@ -17,15 +17,15 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
     return Napi::Number::New(env, conn_socket);
   }
 
-  pid_t comm_pid = 0;
+  pid_t _comm_pid = 0;
   for (;;) {
     std::shared_ptr<Caps> comm_caps;
-    int comm_socket = poll(conn_socket, comm_caps, comm_pid);
+    int comm_socket = poll(conn_socket, comm_caps, _comm_pid);
     int32_t comm_type = -1;
 #define CONTINUE()                                                             \
   {                                                                            \
     close(comm_socket);                                                        \
-    comm_pid = 0;                                                              \
+    _comm_pid = 0;                                                             \
     continue;                                                                  \
   }
     if (comm_caps->read(comm_type) != CAPS_SUCCESS) {
@@ -49,12 +49,22 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
 #undef CONTINUE
   }
 
+  comm_pid = _comm_pid;
+  YDLogw("hiveproc init, got host(%d), %d", comm_pid, _comm_pid);
+  hive__sigchld_start();
+
   for (;;) {
+    hive__checkchld();
+
     pid_t data_pid;
     std::shared_ptr<Caps> caps;
     int data_socket = poll(conn_socket, caps, data_pid);
+    if (data_socket < 0) {
+      YDLogv("unexpected err %d(%s)", errno, strerror(errno));
+      continue;
+    }
     if (data_pid != comm_pid) {
-      close(data_pid);
+      close(data_socket);
       YDLogv("unmatched command pid(%d) and data pid(%d)", comm_pid, data_pid);
       continue;
     }
@@ -131,12 +141,54 @@ void SpecializeProcess(Napi::Object process, std::string &cwd,
       argv->read(val);
       Napi::String jval = Napi::String::New(env, val);
       child_argv.Set(idx, jval);
+      break;
     }
     default:
       YDLogw("unsupported type %d", next_type);
     }
   }
   process["argv"] = child_argv;
+}
+
+void hive__sigchld_start(void) {
+  /* When this function is called, the signal lock must be held. */
+  struct sigaction sa;
+  memset(&sa, 0, sizeof(sa));
+  if (sigfillset(&sa.sa_mask)) {
+    abort();
+  }
+  sa.sa_handler = hive__sigchld;
+
+  /* XXX save old action so we can restore it later on? */
+  if (sigaction(SIGCHLD, &sa, NULL)) {
+    abort();
+  }
+}
+
+void hive__sigchld(int) { pending_chld_entry = true; }
+
+void hive__checkchld() {
+  pending_chld_entry = false;
+  int pending_chld = false;
+
+  pid_t pid;
+  int status;
+  while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+    pending_chld = true;
+    int exit_status = 0;
+    int term_signal = 0;
+    if (WIFEXITED(status))
+      exit_status = WEXITSTATUS(status);
+
+    if (WIFSIGNALED(status))
+      term_signal = WTERMSIG(status);
+    YDLogv("child process(%d) exited with code(%d) and signal(%d)", pid,
+           exit_status, term_signal);
+  }
+
+  if (pending_chld && comm_pid > 0) {
+    kill(comm_pid, SIGCHLD);
+  }
 }
 } // namespace hiveproc
 

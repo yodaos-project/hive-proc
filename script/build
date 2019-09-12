@@ -59,5 +59,6 @@ cmake $project_dir \
   -DCMAKE_LIBRARY_PATH="$prefix/lib"
 make
 cp $build_dir/hiveproc.node $project_dir
+cp $build_dir/hivecli.node $project_dir
 
 cd $project_dir
