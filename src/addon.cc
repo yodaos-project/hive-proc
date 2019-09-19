@@ -1,4 +1,6 @@
 #include "addon.hh"
+#include <sys/wait.h>
+#include <assert.h>
 #include <unistd.h>
 
 #define LOG_TAG "hiveaddon"
