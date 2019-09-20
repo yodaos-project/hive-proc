@@ -2,8 +2,15 @@
 
 #include <caps.h>
 #include <stdint.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+#define assert(ret)                                                            \
+  if (!(ret)) {                                                                \
+    YDLogw(#ret ": assertion failed");                                         \
+    abort();                                                                   \
+  };
 
 namespace hiveproc {
 inline ssize_t readx(int fildes, uint8_t *buf, size_t nbyte);

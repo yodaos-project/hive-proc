@@ -1,7 +1,6 @@
 #include "hiveproc.hh"
 #include <unistd.h>
 #include <iostream>
-#include <assert.h>
 
 #define LOG_TAG "cith"
 #include "logger.h"
