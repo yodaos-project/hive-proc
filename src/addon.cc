@@ -99,6 +99,13 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
       assert(close(comm_fd) == 0);
       assert(close(data_socket) == 0);
       assert(close(conn_socket) == 0);
+
+      int stdio = open("/dev/null", O_RDWR);
+      assert(dup2(stdio, STDIN_FILENO) != -1);
+      assert(dup2(stdio, STDOUT_FILENO) != -1);
+      assert(dup2(stdio, STDERR_FILENO) != -1);
+      assert(close(stdio) == 0);
+
       uv_loop_fork(loop);
       SpecializeProcess(process, cwd, argv);
       return Napi::Number::New(env, 0);
