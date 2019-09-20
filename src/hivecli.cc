@@ -1,12 +1,11 @@
 #include "hivecli.hh"
+#include "logger.h"
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#define LOG_TAG "hivecli"
-#include "logger.h"
 
-namespace hiveproc {
+namespace hive {
 Napi::Value Request(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   std::string hivesock = info[0].As<Napi::String>().Utf8Value();
@@ -74,10 +73,10 @@ Napi::Array caps2js(Napi::Env env, std::shared_ptr<Caps> &caps) {
   }
   return ret;
 }
-} // namespace hiveproc
+} // namespace hive
 
 NAPI_MODULE_INIT() {
   Napi::Object expobj = Napi::Value(env, exports).As<Napi::Object>();
-  expobj.Set("request", Napi::Function::New(env, hiveproc::Request));
+  expobj.Set("request", Napi::Function::New(env, hive::Request));
   return expobj;
 }

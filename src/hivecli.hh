@@ -5,7 +5,7 @@
 #include "napi.h"
 #include "uv.h"
 
-namespace hiveproc {
+namespace hive {
 Napi::Value Request(const Napi::CallbackInfo &info);
 Napi::Array caps2js(Napi::Env env, std::shared_ptr<Caps> &caps);
-} // namespace hiveproc
+} // namespace hive

@@ -17,7 +17,7 @@ find_path(CAPS_INCLUDE_DIRS
 find_library(CAPS_LIBRARY
   NAMES libcaps.a)
 
-file(GLOB HIVEPROC_SOURCE src/addon.cc src/hiveproc.cc)
+file(GLOB HIVEPROC_SOURCE src/hiveproc.cc)
 
 add_library(hiveproc SHARED ${HIVEPROC_SOURCE})
 set_target_properties(hiveproc PROPERTIES PREFIX "" SUFFIX ".node")
@@ -48,7 +48,7 @@ target_compile_definitions(hivecli PRIVATE
 target_include_directories(hivecli PUBLIC src PRIVATE vendor/node-addon-api ${NODE_API_INCLUDE_DIRS} ${CAPS_INCLUDE_DIRS})
 target_link_libraries(hivecli ${CAPS_LIBRARY})
 
-add_executable(echo-server test/echo-server.cc src/hiveproc.cc)
+add_executable(echo-server test/echo-server.cc)
 target_include_directories(echo-server PUBLIC src PRIVATE vendor/node-addon-api ${NODE_API_INCLUDE_DIRS} ${CAPS_INCLUDE_DIRS})
 target_link_libraries(echo-server ${CAPS_LIBRARY})
 

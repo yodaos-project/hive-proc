@@ -1,11 +1,10 @@
-#include "hiveproc.hh"
+#include "helper.hh"
 #include <unistd.h>
 #include <iostream>
 
-#define LOG_TAG "cith"
 #include "logger.h"
 
-using namespace hiveproc;
+using namespace hive;
 
 int main(int argc, char **argv)
 {
@@ -27,17 +26,17 @@ int main(int argc, char **argv)
     pid_t pid;
     std::shared_ptr<Caps> caps;
     int data_socket = poll(conn_socket, caps, pid);
-    assert(data_socket >= 0);
+    CHECK(data_socket >= 0);
 
     std::string target;
-    assert(caps->read(target) == CAPS_SUCCESS);
+    CHECK(caps->read(target) == CAPS_SUCCESS);
 
     std::shared_ptr<Caps> ret = Caps::new_instance();
-    assert(ret->write(target) == CAPS_SUCCESS);
+    CHECK(ret->write(target) == CAPS_SUCCESS);
     size_t buf_size = ret->binary_size();
     uint8_t buf[buf_size];
-    assert(ret->serialize(buf, buf_size, static_cast<uint32_t>(0x80)) == buf_size);
-    hiveproc::writex(data_socket, buf, buf_size);
+    CHECK(ret->serialize(buf, buf_size, static_cast<uint32_t>(0x80)) == buf_size);
+    writex(data_socket, buf, buf_size);
     close(data_socket);
   }
 }

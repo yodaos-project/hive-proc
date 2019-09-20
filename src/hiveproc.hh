@@ -1,13 +1,28 @@
 #pragma once
 
-#include "helper.hh"
-#include <caps.h>
-
-#ifndef HIVE_RECV_TIMEOUT
-#define HIVE_RECV_TIMEOUT 100
+#ifndef HIVE_SOCKET
+#define HIVE_SOCKET "/var/run/hive.sock"
 #endif
 
-namespace hiveproc {
-int initUnixSocket(char *pathname);
-int poll(int conn_socket, std::shared_ptr<Caps> &caps, pid_t &pid);
-} // namespace hiveproc
+#include "helper.hh"
+#define NAPI_VERSION 3
+#include "napi.h"
+#include "uv.h"
+
+namespace hive {
+enum CommandType { Init = 0, Fork };
+enum ResponseStatus {
+  Success = 0,
+};
+
+pid_t comm_pid = 0;
+int comm_fd = -1;
+bool pending_chld_entry = false;
+
+void hive__sigchld(int sig);
+void hive__sigchld_start();
+void hive__checkchld();
+Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info);
+void SpecializeProcess(Napi::Object process, std::string &cwd,
+                       std::shared_ptr<Caps> &argv);
+} // namespace hive

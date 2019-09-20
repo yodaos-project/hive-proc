@@ -9,8 +9,8 @@
     time(&timer);                                                              \
     tm_info = localtime(&timer);                                               \
     strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);                        \
-    fprintf(out, "%s/%s %s(%s:%d): " msg "\n", level, buffer, LOG_TAG,         \
-            __FILE__, __LINE__, ##__VA_ARGS__);                                \
+    fprintf(out, "%s/%s (%s:%d): " msg "\n", level, buffer, __FILE__,          \
+            __LINE__, ##__VA_ARGS__);                                          \
   }
 
 // YDLogvv(message)
