@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -ex
+
+for it in test/*.test.js; do
+  iotjs lib/hiveproc.js $(pwd)/preset/host.js &
+  hiveproc=$!
+  sleep 1
+  iotjs $it
+  set +e
+  kill $hiveproc
+  set -e
+done
