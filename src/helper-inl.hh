@@ -7,7 +7,6 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include <unistd.h>
-#define LOG_TAG "helper-inl"
 #include "logger.h"
 
 namespace hive {
