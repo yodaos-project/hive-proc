@@ -12,7 +12,7 @@
 
 #define CHECK(ret)                                                             \
   if (!(ret)) {                                                                \
-    YDLogw(#ret ": CHECKion failed");                                          \
+    YDLogw(#ret ": Assertion failed");                                         \
     abort();                                                                   \
   };
 

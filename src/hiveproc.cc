@@ -12,7 +12,7 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
 
   hive__sigchld_start();
 
-  if (!info[1].IsEmpty()) {
+  if (info[1].IsString()) {
     // Fork System Service
     Napi::String entry = info[1].As<Napi::String>();
     pid_t pid = fork();

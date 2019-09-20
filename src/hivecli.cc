@@ -10,9 +10,14 @@ Napi::Value Request(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   std::string hivesock = info[0].As<Napi::String>().Utf8Value();
   napi_value buf = info[1];
+  bool keep_socket = false;
+  if (info[2].IsBoolean()) {
+    keep_socket = info[2].As<Napi::Boolean>().Value();
+  }
   uint8_t *buf_data;
   size_t buf_length;
-  napi_get_buffer_info(env, buf, (void **)&buf_data, &buf_length);
+  CHECK(napi_get_buffer_info(env, buf, (void **)&buf_data, &buf_length) ==
+        napi_ok);
 
   int fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (fd < 0) {
@@ -39,7 +44,11 @@ Napi::Value Request(const Napi::CallbackInfo &info) {
   }
 
   Napi::Array res = caps2js(env, caps);
-  res["fd"] = Napi::Number::New(env, fd);
+  if (keep_socket) {
+    res["fd"] = Napi::Number::New(env, fd);
+  } else {
+    close(fd);
+  }
   return res;
 }
 
