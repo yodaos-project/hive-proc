@@ -34,10 +34,10 @@ int main(int argc, char **argv)
     assert(caps->read(target) == CAPS_SUCCESS);
 
     std::shared_ptr<Caps> ret = Caps::new_instance();
-    ret->write(target);
+    assert(ret->write(target) == CAPS_SUCCESS);
     size_t buf_size = ret->binary_size();
     uint8_t buf[buf_size];
-    ret->serialize(buf, buf_size);
+    assert(ret->serialize(buf, buf_size, static_cast<uint32_t>(0x80)) == buf_size);
     hiveproc::writex(data_socket, buf, buf_size);
     close(data_socket);
   }
