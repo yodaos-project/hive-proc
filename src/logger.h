@@ -1,6 +1,10 @@
 #pragma once
 #include <time.h>
 
+#define __FILENAME__                                                           \
+  (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1     \
+                                    : __FILE__)
+
 #define YDLog_VA(out, level, msg, ...)                                         \
   {                                                                            \
     time_t timer;                                                              \
@@ -9,7 +13,7 @@
     time(&timer);                                                              \
     tm_info = localtime(&timer);                                               \
     strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);                        \
-    fprintf(out, "%s/%s (%s:%d): " msg "\n", level, buffer, __FILE__,          \
+    fprintf(out, "%s/%s (%s:%d): " msg "\n", level, buffer, __FILENAME__,      \
             __LINE__, ##__VA_ARGS__);                                          \
   }
 

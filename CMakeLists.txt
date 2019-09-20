@@ -31,6 +31,7 @@ endif()
 target_compile_definitions(hiveproc PRIVATE
   HIVE_SOCKET="${HIVEPROC_SOCKET}"
   NODE_ADDON_API_DISABLE_DEPRECATED)
+target_compile_options(hiveproc PRIVATE -fno-exceptions)
 target_include_directories(hiveproc PUBLIC src PRIVATE vendor/node-addon-api ${NODE_API_INCLUDE_DIRS} ${CAPS_INCLUDE_DIRS})
 target_link_libraries(hiveproc ${CAPS_LIBRARY})
 
@@ -45,6 +46,7 @@ else()
 endif()
 target_compile_definitions(hivecli PRIVATE
   NODE_ADDON_API_DISABLE_DEPRECATED)
+target_compile_options(hivecli PRIVATE -fno-exceptions)
 target_include_directories(hivecli PUBLIC src PRIVATE vendor/node-addon-api ${NODE_API_INCLUDE_DIRS} ${CAPS_INCLUDE_DIRS})
 target_link_libraries(hivecli ${CAPS_LIBRARY})
 

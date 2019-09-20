@@ -9,8 +9,23 @@ namespace hive {
 Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::Object process = info[0].As<Napi::Object>();
-  uv_loop_t *loop;
-  napi_get_uv_event_loop(napi_env(env), &loop);
+
+  hive__sigchld_start();
+
+  if (!info[1].IsEmpty()) {
+    // Fork System Service
+    Napi::String entry = info[1].As<Napi::String>();
+    pid_t pid = fork();
+    CHECK(pid >= 0);
+    if (pid == 0) {
+      std::string cwd;
+      std::shared_ptr<Caps> argv;
+      SpecializeProcess(process, cwd, argv);
+      process.Get("argv").As<Napi::Array>().Set(1, entry);
+      return Napi::Number::New(env, 0);
+    }
+    YDLogi("forked system service: %d", pid);
+  }
 
   int conn_socket = initUnixSocket(HIVE_SOCKET);
   if (conn_socket < 0) {
@@ -19,8 +34,13 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
 
   pid_t _comm_pid = 0;
   for (;;) {
+    hive__checkchld();
+
     std::shared_ptr<Caps> comm_caps;
     int comm_socket = poll(conn_socket, comm_caps, _comm_pid);
+    if (comm_socket < 0) {
+      continue;
+    }
     int32_t comm_type = -1;
 #define CONTINUE()                                                             \
   {                                                                            \
@@ -49,9 +69,7 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
 #undef CONTINUE
   }
 
-  comm_pid = _comm_pid;
-  YDLogw("hiveproc init, got host(%d), %d", comm_pid, _comm_pid);
-  hive__sigchld_start();
+  YDLogw("hiveproc init, got host(%d)", _comm_pid);
 
   for (;;) {
     hive__checkchld();
@@ -60,12 +78,11 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
     std::shared_ptr<Caps> caps;
     int data_socket = poll(conn_socket, caps, data_pid);
     if (data_socket < 0) {
-      YDLogv("unexpected err %d(%s)", errno, strerror(errno));
       continue;
     }
-    if (data_pid != comm_pid) {
+    if (data_pid != _comm_pid) {
       close(data_socket);
-      YDLogv("unmatched command pid(%d) and data pid(%d)", comm_pid, data_pid);
+      YDLogv("unmatched command pid(%d) and data pid(%d)", _comm_pid, data_pid);
       continue;
     }
 
@@ -98,13 +115,6 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
       CHECK(close(data_socket) == 0);
       CHECK(close(conn_socket) == 0);
 
-      int stdio = open("/dev/null", O_RDWR);
-      CHECK(dup2(stdio, STDIN_FILENO) != -1);
-      CHECK(dup2(stdio, STDOUT_FILENO) != -1);
-      CHECK(dup2(stdio, STDERR_FILENO) != -1);
-      CHECK(close(stdio) == 0);
-
-      uv_loop_fork(loop);
       SpecializeProcess(process, cwd, argv);
       return Napi::Number::New(env, 0);
     }
@@ -123,24 +133,41 @@ Napi::Value ForkAndSpecialize(const Napi::CallbackInfo &info) {
 void SpecializeProcess(Napi::Object process, std::string &cwd,
                        std::shared_ptr<Caps> &argv) {
   Napi::Env env = process.Env();
-  CHECK(chdir(cwd.c_str()) == 0);
+  hive__sigchld_stop();
 
-  auto cwdDescriptor = Napi::PropertyDescriptor::Value(
-      "cwd", Napi::String::New(env, cwd),
-      napi_property_attributes(napi_enumerable | napi_configurable));
+  int stdio = open("/dev/null", O_RDWR);
+  CHECK(dup2(stdio, STDIN_FILENO) != -1);
+  CHECK(dup2(stdio, STDOUT_FILENO) != -1);
+  CHECK(dup2(stdio, STDERR_FILENO) != -1);
+  CHECK(close(stdio) == 0);
+
+  uv_loop_t *loop;
+  CHECK(napi_get_uv_event_loop(napi_env(env), &loop) == napi_ok);
+  CHECK(uv_loop_fork(loop) == 0);
+
+  if (!cwd.empty()) {
+    CHECK(chdir(cwd.c_str()) == 0);
+    auto cwdDescriptor = Napi::PropertyDescriptor::Value(
+        "cwd", Napi::String::New(env, cwd),
+        napi_property_attributes(napi_enumerable | napi_configurable));
+    process.DefineProperties({cwdDescriptor});
+  }
+
   auto pidDescriptor = Napi::PropertyDescriptor::Value(
       "pid", Napi::Number::New(env, getpid()),
       napi_property_attributes(napi_enumerable | napi_configurable));
   auto ppidDescriptor = Napi::PropertyDescriptor::Value(
       "ppid", Napi::Number::New(env, getppid()),
       napi_property_attributes(napi_enumerable | napi_configurable));
-  process.DefineProperties({cwdDescriptor, pidDescriptor, ppidDescriptor});
+  process.DefineProperties({pidDescriptor, ppidDescriptor});
 
+  if (argv == nullptr) {
+    return;
+  }
   Napi::Array process_argv = process.Get("argv").As<Napi::Array>();
   Napi::Array child_argv = Napi::Array::New(env, argv->size() + 1);
   Napi::String argv0 = process_argv.Get(uint32_t(0)).As<Napi::String>();
   child_argv.Set(uint32_t(0), argv0);
-
   for (uint32_t idx = 1; idx <= argv->size(); idx++) {
     int32_t next_type = argv->next_type();
     switch (next_type) {
@@ -159,7 +186,6 @@ void SpecializeProcess(Napi::Object process, std::string &cwd,
 }
 
 void hive__sigchld_start(void) {
-  /* When this function is called, the signal lock must be held. */
   struct sigaction sa;
   memset(&sa, 0, sizeof(sa));
   if (sigfillset(&sa.sa_mask)) {
@@ -167,10 +193,23 @@ void hive__sigchld_start(void) {
   }
   sa.sa_handler = hive__sigchld;
 
-  /* XXX save old action so we can restore it later on? */
   if (sigaction(SIGCHLD, &sa, NULL)) {
     abort();
   }
+}
+
+void hive__sigchld_stop(void) {
+  struct sigaction sa;
+
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = SIG_DFL;
+
+  /* sigaction can only fail with EINVAL or EFAULT; an attempt to deregister a
+   * signal implies that it was successfully registered earlier, so EINVAL
+   * should never happen.
+   */
+  if (sigaction(SIGCHLD, &sa, NULL))
+    abort();
 }
 
 void hive__sigchld(int) { pending_chld_entry = true; }
@@ -182,6 +221,10 @@ void hive__checkchld() {
   pid_t pid;
   int status;
   while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+    if (system_service_pid > 0 && pid == system_service_pid) {
+      exit(3);
+    }
+
     pending_chld = true;
     int exit_status = 0;
     int term_signal = 0;

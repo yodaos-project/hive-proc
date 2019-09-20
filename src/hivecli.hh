@@ -1,6 +1,7 @@
 #pragma once
 
 #include "helper.hh"
+#define NAPI_DISABLE_CPP_EXCEPTIONS
 #define NAPI_VERSION 3
 #include "napi.h"
 #include "uv.h"
